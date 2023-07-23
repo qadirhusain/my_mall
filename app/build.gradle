@@ -47,9 +47,9 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
     implementation 'de.hdodenhof:circleimageview:3.1.0'
 
-    implementation 'com.google.firebase:firebase-firestore:24.6.1'
+    implementation 'com.google.firebase:firebase-firestore:24.7.0'
 
-    implementation 'com.google.firebase:firebase-auth:22.0.0'
+    implementation 'com.google.firebase:firebase-auth:22.1.0'
 
     // Import the Firebase BoM
     implementation platform('com.google.firebase:firebase-bom:31.1.1')
@@ -63,6 +63,7 @@ dependencies {
 
     implementation 'com.paytm.appinvokesdk:appinvokesdk:1.6.15'
     implementation 'com.android.volley:volley:1.2.1'
+    implementation 'com.razorpay:checkout:1.6.33'
 
     // Add the following lines to ensure consistent Kotlin dependencies
     implementation 'org.jetbrains.kotlin:kotlin-stdlib:1.8.20'
