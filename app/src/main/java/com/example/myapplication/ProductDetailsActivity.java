@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager.widget.ViewPager;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.app.Dialog;
 import android.content.Intent;
 import android.content.res.ColorStateList;
@@ -56,6 +57,7 @@ public class ProductDetailsActivity extends AppCompatActivity {
     private ImageView codIndicator;
     private TextView tvCodIndicator;
     private TabLayout viewPagerIndicator;
+    public static Activity productDetailsActivity;
     private LinearLayout couponRedemptionLayout;
     private Button couponRedeemBtn;
     private TextView rewardTitle;
@@ -359,7 +361,8 @@ public class ProductDetailsActivity extends AppCompatActivity {
                                                     , (long) documentSnapshot.get("total_ratings")
                                                     , documentSnapshot.get("product_price").toString()
                                                     , documentSnapshot.get("cutted_price").toString()
-                                                    , (Boolean) documentSnapshot.get("COD")));
+                                                    , (Boolean) documentSnapshot.get("COD")
+                                                    , (Boolean) documentSnapshot.get("in_stock")));
                                         }
 
                                         ALREADY_ADDED_TO_WISHLIST = true;
@@ -519,10 +522,12 @@ public class ProductDetailsActivity extends AppCompatActivity {
         //////   RATING LAYOUT
 
         buyNowBtn.setOnClickListener(v -> {
-            loadingDialog.show();
             if (currentUser == null) {
                 signInDialog.show();
             } else {
+                DeliveryActivity.fromCart = false;
+                loadingDialog.show();
+                productDetailsActivity = ProductDetailsActivity.this;
                 DeliveryActivity.cartItemModelList = new ArrayList<>();
                 DeliveryActivity.cartItemModelList.add(new CartItemModel(CartItemModel.CART_ITEM, productID
                         , documentSnapshot.get("product_image_1").toString()
@@ -745,6 +750,7 @@ public class ProductDetailsActivity extends AppCompatActivity {
         int id = item.getItemId();
 
         if (id == android.R.id.home) {
+            productDetailsActivity = null;
             finish();
             return true;
         } else if (id == R.id.main_search_icon) {
@@ -761,5 +767,11 @@ public class ProductDetailsActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onBackPressed() {
+        productDetailsActivity = null;
+        super.onBackPressed();
     }
 }

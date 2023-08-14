@@ -1,8 +1,5 @@
 package com.example.myapplication;
 
-import static com.example.myapplication.ProductDetailsActivity.addToWishlistBtn;
-import static com.example.myapplication.ProductDetailsActivity.initialRating;
-
 import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
@@ -15,12 +12,10 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -28,7 +23,6 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 public class DBqueries {
@@ -103,7 +97,8 @@ public class DBqueries {
                                             , (long) documentSnapshot.get("total_ratings_" + x)
                                             , documentSnapshot.get("product_price_" + x).toString()
                                             , documentSnapshot.get("cutted_price_" + x).toString()
-                                            , (Boolean) documentSnapshot.get("COD_" + x)));
+                                            , (Boolean) documentSnapshot.get("COD_" + x)
+                                            , (Boolean) documentSnapshot.get("in_stock_" + x)));
                                 }
                                 lists.get(index).add(new HomePageModel(2, documentSnapshot.get("layout_title").toString(), documentSnapshot.get("layout_background").toString(), horizontalProductScrollModelList, viewAllProductList));
 
@@ -171,7 +166,8 @@ public class DBqueries {
                                                                 , (long) task.getResult().get("total_ratings")
                                                                 , task.getResult().get("product_price").toString()
                                                                 , task.getResult().get("cutted_price").toString()
-                                                                , (Boolean) task.getResult().get("COD")));
+                                                                , (Boolean) task.getResult().get("COD")
+                                                                , (Boolean) task.getResult().get("in_stock")));
 
                                                         MyWishlistFragment.wishlistAdapter.notifyDataSetChanged();
                                                     }
@@ -227,6 +223,9 @@ public class DBqueries {
         wishlistModelList.clear();
         cartList.clear();
         cartItemModelList.clear();
+        myRatedIds.clear();
+        myRating.clear();
+        addressesModelList.clear();
     }
 
     public static void loadRatingList(Context context) {

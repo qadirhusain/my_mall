@@ -53,17 +53,6 @@ public class MyCartFragment extends Fragment {
         layoutManager.setOrientation(LinearLayoutManager.VERTICAL);
         cartItemsRecyclerView.setLayoutManager(layoutManager);
 
-        if (DBqueries.cartItemModelList.size() == 0) {
-            DBqueries.cartList.clear();
-            DBqueries.loadCartList(getContext(), loadingDialog, true, new TextView(getContext()), totalAmount);
-        } else {
-            if (DBqueries.cartItemModelList.get(DBqueries.cartItemModelList.size() - 1).getType() == CartItemModel.CART_TOTAL_AMOUNT) {
-                LinearLayout parent = (LinearLayout) totalAmount.getParent().getParent();
-                parent.setVisibility(View.VISIBLE);
-            }
-            loadingDialog.dismiss();
-        }
-
         cartAdapter = new CartAdapter(DBqueries.cartItemModelList, totalAmount, true);
         cartItemsRecyclerView.setAdapter(cartAdapter);
         cartAdapter.notifyDataSetChanged();
@@ -71,12 +60,13 @@ public class MyCartFragment extends Fragment {
         continueBtn.setOnClickListener(v -> {
 
             DeliveryActivity.cartItemModelList = new ArrayList<>();
+            DeliveryActivity.fromCart = true;
 
             for (int x = 0; x < DBqueries.cartItemModelList.size(); x++) {
                 CartItemModel cartItemModel = DBqueries.cartItemModelList.get(x);
-//                if (cartItemModel.getInStock()) {
+//                if (cartItemModel.getInStock()) {              // This line is crashing the app when user click on continue btn from cart fragment
                     DeliveryActivity.cartItemModelList.add(cartItemModel);
-//                }
+//                }                                            // This line is crashing the app when user click on continue btn from cart fragment
             }
             DeliveryActivity.cartItemModelList.add(new CartItemModel(CartItemModel.CART_TOTAL_AMOUNT));
 
@@ -91,5 +81,21 @@ public class MyCartFragment extends Fragment {
         });
 
         return view;
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        if (DBqueries.cartItemModelList.size() == 0) {
+            DBqueries.cartList.clear();
+            DBqueries.loadCartList(getContext(), loadingDialog, true, new TextView(getContext()), totalAmount);
+        } else {
+            if (DBqueries.cartItemModelList.get(DBqueries.cartItemModelList.size() - 1).getType() == CartItemModel.CART_TOTAL_AMOUNT) {
+                LinearLayout parent = (LinearLayout) totalAmount.getParent().getParent();
+                parent.setVisibility(View.VISIBLE);
+            }
+            loadingDialog.dismiss();
+        }
     }
 }

@@ -169,9 +169,10 @@ public class HomeFragment extends Fragment {
 
     private void reloadPage(){
         networkInfo = connectivityManager.getActiveNetworkInfo();
-        categoryModelList.clear();
-        lists.clear();
-        loadedCategoriesNames.clear();
+//        categoryModelList.clear();
+//        lists.clear();
+//        loadedCategoriesNames.clear();
+        DBqueries.clearData();
         if (networkInfo != null && networkInfo.isConnected()) {
             MainActivity.drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
             noInternetConnection.setVisibility(View.GONE);

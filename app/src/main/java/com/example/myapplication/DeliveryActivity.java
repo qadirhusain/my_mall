@@ -1,7 +1,11 @@
 package com.example.myapplication;
 
+import static com.example.myapplication.DBqueries.firebaseFirestore;
+
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -22,13 +26,19 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.razorpay.Checkout;
 import com.razorpay.PaymentResultListener;
 
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class DeliveryActivity extends AppCompatActivity implements PaymentResultListener {
 
@@ -44,9 +54,14 @@ public class DeliveryActivity extends AppCompatActivity implements PaymentResult
     private Button continueBtn;
     private Dialog loadingDialog;
     private Dialog paymentMethodDialog;
-    private ImageButton paytm;
+    private String key_id = "rzp_test_cIdF6iSrCVJsyw";
+    private ConstraintLayout orderConfirmationLayout;
+    private ImageButton continueShoppingBtn;
+    private TextView orderId;
+    private Boolean successResponse = false;
+    public static Boolean fromCart;
 
-    @SuppressLint("MissingInflatedId")
+    @SuppressLint({"MissingInflatedId", "UseCompatLoadingForDrawables"})
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -57,6 +72,7 @@ public class DeliveryActivity extends AppCompatActivity implements PaymentResult
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowTitleEnabled(true);
         getSupportActionBar().setTitle("Delivery");
+
         Checkout.preload(DeliveryActivity.this);
 
         deliveryRecyclerView = findViewById(R.id.delivery_recyclerview);
@@ -66,12 +82,17 @@ public class DeliveryActivity extends AppCompatActivity implements PaymentResult
         fullAddress = findViewById(R.id.address);
         pinCode = findViewById(R.id.pincode);
         continueBtn = findViewById(R.id.cart_continue_btn);
+        orderConfirmationLayout = findViewById(R.id.order_confirmation_layout);
+        continueShoppingBtn = findViewById(R.id.continue_shopping_btn);
+        orderId = findViewById(R.id.order_id);
 
         //////////   loading dialog
         loadingDialog = new Dialog(DeliveryActivity.this);
         loadingDialog.setContentView(R.layout.loading_progress_dialog);
         loadingDialog.setCancelable(false);
-        loadingDialog.getWindow().setBackgroundDrawable(getDrawable(R.drawable.slider_background));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            loadingDialog.getWindow().setBackgroundDrawable(getDrawable(R.drawable.slider_background));
+        }
         loadingDialog.getWindow().setLayout(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         //////////   loading dialog
 
@@ -100,25 +121,19 @@ public class DeliveryActivity extends AppCompatActivity implements PaymentResult
             startActivity(myAddressesIntent);
         });
 
-        continueBtn.setOnClickListener(v -> {
-//            String payAmount = totalAmount.getText().toString().substring(3, totalAmount.getText().toString().length()-2);
-//            startPayment(Integer.valueOf(payAmount));
-            paymentMethodDialog.show();
-            paytm = paymentMethodDialog.findViewById(R.id.paytm);
-        });
+        continueBtn.setOnClickListener(v -> paymentMethodDialog.show());
 
-//        paytm.setOnClickListener(v -> {
-//            String payAmount = totalAmount.getText().toString().substring(3, totalAmount.getText().toString().length()-2);
-//            startPayment(Integer.parseInt(payAmount));
-//            paymentMethodDialog.dismiss();
-//            loadingDialog.show();
-//        });
+        paymentMethodDialog.findViewById(R.id.paytm).setOnClickListener(v -> {
+            Log.d("newTag", "clicked");
+            String payAmount = totalAmount.getText().toString().substring(3, totalAmount.getText().toString().length() - 2);
+            startPayment(Integer.parseInt(payAmount.trim()));
+        });
     }
 
-    public void startPayment(int Amount){
+    public void startPayment(int Amount) {
 
         Checkout checkout = new Checkout();
-        checkout.setKeyID("rzp_test_cIdF6iSrCVJsyw");
+        checkout.setKeyID(key_id);
 
         try {
             JSONObject options = new JSONObject();
@@ -130,9 +145,9 @@ public class DeliveryActivity extends AppCompatActivity implements PaymentResult
             options.put("theme.color", "#BA68C8");
 
             options.put("currency", "INR");
-            options.put("amount", Amount*100);//pass amount in currency subunits
+            options.put("amount", Amount * 100);//pass amount in currency subunits
             options.put("prefill.email", "mymall@gmail.com");
-            options.put("prefill.contact","9800000000");
+            options.put("prefill.contact", "9800000000");
 
             JSONObject retryObj = new JSONObject();
             retryObj.put("enabled", true);
@@ -141,9 +156,9 @@ public class DeliveryActivity extends AppCompatActivity implements PaymentResult
 
             checkout.open(DeliveryActivity.this, options);
 
-        } catch (Exception e){
+        } catch (Exception e) {
             Log.e("TAG", "Error in starting Razorpay Checkout", e);
-            Toast.makeText(this, "Error in starting Razorpay Checkout"+ e.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Error in starting Razorpay Checkout" + e.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
 
         }
 
@@ -169,11 +184,75 @@ public class DeliveryActivity extends AppCompatActivity implements PaymentResult
 
     @Override
     public void onPaymentSuccess(String s) {
-        Toast.makeText(this, "payment done" + s, Toast.LENGTH_SHORT).show();
+//        Toast.makeText(this, "payment done" + s, Toast.LENGTH_SHORT).show();
+
+        successResponse = true;
+//        loadingDialog.show();
+
+        if (MainActivity.mainActivity != null) {
+            MainActivity.mainActivity.finish();
+            MainActivity.mainActivity = null;
+            MainActivity.showCart = false;
+        }
+
+        if (ProductDetailsActivity.productDetailsActivity != null) {
+            ProductDetailsActivity.productDetailsActivity.finish();
+            ProductDetailsActivity.productDetailsActivity = null;
+        }
+
+        if (fromCart){
+            loadingDialog.show();
+            Map<String, Object> updateCartList = new HashMap<>();
+            long cartListSize = 0;
+            List<Integer> indexList = new ArrayList<>();
+
+            for (int x = 0; x < DBqueries.cartList.size(); x++){
+                if (!cartItemModelList.get(x).getInStock()){
+                    updateCartList.put("product_ID_" + cartListSize, cartItemModelList.get(x).getProductID());
+                    cartListSize++;
+                } else {
+                    indexList.add(x);
+                }
+            }
+            updateCartList.put("list_size", cartListSize);
+
+            FirebaseFirestore.getInstance().collection("USERS").document(FirebaseAuth.getInstance().getUid()).collection("USER_DATA").document("MY_CART")
+                    .set(updateCartList).addOnCompleteListener(task -> {
+                        if (task.isSuccessful()){
+
+                            for (int x = 0; x < indexList.size(); x++){
+                                DBqueries.cartList.remove(indexList.get(x).intValue());
+                                DBqueries.cartItemModelList.remove(indexList.get(x).intValue());
+                                DBqueries.cartItemModelList.remove(DBqueries.cartItemModelList.size() - 1);
+                            }
+
+                        } else {
+                            String error = task.getException().getMessage();
+                            Toast.makeText(DeliveryActivity.this, error, Toast.LENGTH_SHORT).show();
+                        }
+                        loadingDialog.dismiss();
+                    });
+        }
+
+        orderId.setText("Order ID " + orderId);
+        orderConfirmationLayout.setVisibility(View.VISIBLE);
+        continueShoppingBtn.setOnClickListener(v -> {
+            finish();
+        });
+
     }
 
     @Override
     public void onPaymentError(int i, String s) {
-        Toast.makeText(this, "payment error" +s, Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "payment error" + s, Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (successResponse){
+            finish();
+            return;
+        }
+        super.onBackPressed();
     }
 }

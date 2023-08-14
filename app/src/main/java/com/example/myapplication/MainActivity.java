@@ -2,6 +2,7 @@ package com.example.myapplication;
 
 import static com.example.myapplication.RegisterActivity.setSignUpFragment;
 
+import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
@@ -45,6 +46,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int REWARDS_FRAGMENT = 4;
     private static final int ACCOUNT_FRAGMENT = 5;
     public static Boolean showCart = false;
+    public static Activity mainActivity;
 
     private FrameLayout frameLayout;
     private int currentFragment = -1;
@@ -83,6 +85,7 @@ public class MainActivity extends AppCompatActivity {
         scrollFlags = params.getScrollFlags();
 
         if (showCart) {
+            mainActivity = this;
             drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             gotoFragment("My Cart", new MyCartFragment(), -2);
@@ -222,6 +225,7 @@ public class MainActivity extends AppCompatActivity {
             return true;
         } else if (id == android.R.id.home) {
             if (showCart) {
+                mainActivity = null;
                 showCart = false;
                 finish();
                 return true;
@@ -255,6 +259,7 @@ public class MainActivity extends AppCompatActivity {
                 super.onBackPressed();
             } else {
                 if (showCart) {
+                    mainActivity = null;
                     showCart = false;
                     finish();
                 } else {
